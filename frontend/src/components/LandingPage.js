@@ -47,20 +47,7 @@ const LandingPage = () => {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-lime-200 via-green-200 to-emerald-300">
-        {/* Subtle plant pattern */}
-        <div className="absolute inset-0 pointer-events-none select-none opacity-30 z-0">
-          <svg width="100%" height="100%" className="absolute inset-0" style={{minHeight:'100vh'}}>
-            <defs>
-              <pattern id="plantdots" x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse">
-                <circle cx="10" cy="10" r="2" fill="#6EE7B7" />
-                <circle cx="50" cy="50" r="1.5" fill="#A7F3D0" />
-                <rect x="30" y="30" width="4" height="4" rx="2" fill="#FDE68A" />
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#plantdots)" />
-          </svg>
-        </div>
+      <div className="relative overflow-hidden bg-gradient-to-br from-[#0f2027] via-[#203a43] to-[#2c5364]">
         {/* Floating plant emojis */}
         {floatingPlants.map((p, i) => (
           <span
@@ -71,7 +58,7 @@ const LandingPage = () => {
               top: p.top,
               fontSize: p.size,
               animationDelay: p.delay,
-              opacity: 0.18,
+              opacity: 0.13,
               zIndex: 1
             }}
           >{p.emoji}</span>
@@ -81,17 +68,17 @@ const LandingPage = () => {
           <PlantHeroSVG />
           <div className="text-center">
             {user && (
-              <div className="text-lg text-green-700 mb-2 animate-fade-in">Welcome back, <span className="font-bold text-yellow-500">{user.name || user.email || 'Gardener'}</span>!</div>
+              <div className="text-lg text-emerald-300 mb-2 animate-fade-in">Welcome back, <span className="font-bold text-emerald-400">{user.name || user.email || 'Gardener'}</span>!</div>
             )}
-            <h1 className="text-5xl md:text-7xl font-extrabold text-emerald-900 mb-4 leading-tight drop-shadow-xl animate-gradient-text">
+            <h1 className="text-5xl md:text-7xl font-extrabold text-emerald-200 mb-4 leading-tight drop-shadow-lg">
               Discover the
-              <span className="block font-extrabold animate-gradient-text-glow">Magic of Plants</span>
+              <span className="block font-extrabold text-emerald-300 drop-shadow-md">Magic of Plants</span>
             </h1>
-            <p className="text-xl md:text-2xl text-emerald-800 mb-6 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-xl md:text-2xl text-emerald-300 mb-6 max-w-3xl mx-auto leading-relaxed">
               "The love of gardening is a seed once sown that never dies."
-              <span className="block text-lg mt-2 text-emerald-600">- Gertrude Jekyll</span>
+              <span className="block text-lg mt-2 text-emerald-200">- Gertrude Jekyll</span>
             </p>
-            <p className="text-lg text-emerald-900 mb-10 max-w-2xl mx-auto">
+            <p className="text-lg text-emerald-100 mb-10 max-w-2xl mx-auto">
               Transform your space into a thriving garden with AI-powered plant care,
               smart reminders, and expert guidance. Your plants deserve the best care.
             </p>
@@ -99,14 +86,14 @@ const LandingPage = () => {
               <Link
                 to="/register"
                 aria-label="Start Growing Today"
-                className="bg-yellow-400 hover:bg-yellow-500 text-emerald-900 px-8 py-4 rounded-full font-bold text-lg transition-all duration-300 transform hover:scale-105 hover:shadow-2xl active:scale-95 shadow-lg focus:outline-none focus:ring-4 focus:ring-yellow-300 animate-fade-in animate-pulse-cta"
+                className="bg-emerald-700 hover:bg-emerald-600 text-white px-8 py-4 rounded-full font-bold text-lg transition-all duration-300 transform hover:scale-105 hover:shadow-2xl active:scale-95 shadow-lg focus:outline-none focus:ring-4 focus:ring-emerald-800 animate-fade-in animate-pulse-cta"
               >
                 <span className="inline-block mr-2 animate-bounce">🌱</span> Start Growing Today
               </Link>
               <Link
                 to="/login"
                 aria-label="Sign In"
-                className="border-2 border-emerald-700 text-emerald-900 hover:bg-emerald-100 hover:text-emerald-800 px-8 py-4 rounded-full font-bold text-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-emerald-300 animate-fade-in"
+                className="border-2 border-emerald-600 text-emerald-200 hover:bg-emerald-900 hover:text-emerald-100 px-8 py-4 rounded-full font-bold text-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-emerald-800 animate-fade-in"
               >
                 Sign In
               </Link>
@@ -122,10 +109,10 @@ const LandingPage = () => {
       </div>
 
       {/* Features Section */}
-      <div className="py-20 bg-zinc-900 fadein-on-scroll opacity-0 translate-y-8 transition-all duration-1000">
+      <div className="py-20 bg-gradient-to-br from-[#0f2027] via-[#203a43] to-[#2c5364] fadein-on-scroll opacity-0 translate-y-8 transition-all duration-1000">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-emerald-100 mb-4">
+            <h2 className="text-4xl md:text-5xl font-bold text-emerald-200 mb-4">
               Everything Your Plants Need
             </h2>
             <p className="text-xl text-emerald-300 max-w-3xl mx-auto">
@@ -133,69 +120,69 @@ const LandingPage = () => {
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {/* Feature Cards - add more color and icons */}
-            <div className="bg-white/90 p-8 rounded-2xl border border-emerald-100 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 mb-8">
+            {/* Feature Cards - dark palette */}
+            <div className="bg-[#1a2a2f]/90 p-8 rounded-2xl border border-[#29434e] shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 mb-8">
               <div className="text-4xl mb-4">🤖</div>
-              <h3 className="text-2xl font-bold text-emerald-900 mb-3">AI Plant Assistant</h3>
-              <p className="text-emerald-700 mb-4">
+              <h3 className="text-2xl font-bold text-emerald-200 mb-3">AI Plant Assistant</h3>
+              <p className="text-emerald-100 mb-4">
                 Get instant plant identification, disease detection, and personalized care advice powered by advanced AI.
               </p>
-              <div className="flex items-center text-emerald-500 font-semibold">
+              <div className="flex items-center text-emerald-400 font-semibold">
                 <span>Learn More</span>
                 <span className="ml-2">→</span>
               </div>
             </div>
-            <div className="bg-white/90 p-8 rounded-2xl border border-emerald-100 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 mb-8">
+            <div className="bg-[#1a2a2f]/90 p-8 rounded-2xl border border-[#29434e] shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 mb-8">
               <div className="text-4xl mb-4">⏰</div>
-              <h3 className="text-2xl font-bold text-emerald-900 mb-3">Smart Reminders</h3>
-              <p className="text-emerald-700 mb-4">
+              <h3 className="text-2xl font-bold text-emerald-200 mb-3">Smart Reminders</h3>
+              <p className="text-emerald-100 mb-4">
                 Never forget to water, fertilize, or care for your plants with intelligent scheduling and notifications.
               </p>
-              <div className="flex items-center text-emerald-500 font-semibold">
+              <div className="flex items-center text-emerald-400 font-semibold">
                 <span>Learn More</span>
                 <span className="ml-2">→</span>
               </div>
             </div>
-            <div className="bg-white/90 p-8 rounded-2xl border border-emerald-100 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 mb-8">
+            <div className="bg-[#1a2a2f]/90 p-8 rounded-2xl border border-[#29434e] shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 mb-8">
               <div className="text-4xl mb-4">🌤️</div>
-              <h3 className="text-2xl font-bold text-emerald-900 mb-3">Weather Smart</h3>
-              <p className="text-emerald-700 mb-4">
+              <h3 className="text-2xl font-bold text-emerald-200 mb-3">Weather Smart</h3>
+              <p className="text-emerald-100 mb-4">
                 Get local weather updates and care recommendations tailored to your climate and conditions.
               </p>
-              <div className="flex items-center text-emerald-500 font-semibold">
+              <div className="flex items-center text-emerald-400 font-semibold">
                 <span>Learn More</span>
                 <span className="ml-2">→</span>
               </div>
             </div>
-            <div className="bg-white/90 p-8 rounded-2xl border border-emerald-100 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 mb-8">
+            <div className="bg-[#1a2a2f]/90 p-8 rounded-2xl border border-[#29434e] shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 mb-8">
               <div className="text-4xl mb-4">📖</div>
-              <h3 className="text-2xl font-bold text-emerald-900 mb-3">Plant Diary</h3>
-              <p className="text-emerald-700 mb-4">
+              <h3 className="text-2xl font-bold text-emerald-200 mb-3">Plant Diary</h3>
+              <p className="text-emerald-100 mb-4">
                 Track your gardening journey with detailed notes, photos, and progress updates for each plant.
               </p>
-              <div className="flex items-center text-emerald-500 font-semibold">
+              <div className="flex items-center text-emerald-400 font-semibold">
                 <span>Learn More</span>
                 <span className="ml-2">→</span>
               </div>
             </div>
-            <div className="bg-white/90 p-8 rounded-2xl border border-emerald-100 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 mb-8">
+            <div className="bg-[#1a2a2f]/90 p-8 rounded-2xl border border-[#29434e] shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 mb-8">
               <div className="text-4xl mb-4">👥</div>
-              <h3 className="text-2xl font-bold text-emerald-900 mb-3">Grow Together</h3>
-              <p className="text-emerald-700 mb-4">
+              <h3 className="text-2xl font-bold text-emerald-200 mb-3">Grow Together</h3>
+              <p className="text-emerald-100 mb-4">
                 Connect with fellow gardeners, share tips, and celebrate your growing achievements together.
               </p>
-              <div className="flex items-center text-emerald-500 font-semibold">
+              <div className="flex items-center text-emerald-400 font-semibold">
                 <span>Learn More</span>
                 <span className="ml-2">→</span>
               </div>
             </div>
-            <div className="bg-white/90 p-8 rounded-2xl border border-emerald-100 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 mb-8">
+            <div className="bg-[#1a2a2f]/90 p-8 rounded-2xl border border-[#29434e] shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 mb-8">
               <div className="text-4xl mb-4">🌱</div>
-              <h3 className="text-2xl font-bold text-emerald-900 mb-3">Expert Care</h3>
-              <p className="text-emerald-700 mb-4">
+              <h3 className="text-2xl font-bold text-emerald-200 mb-3">Expert Care</h3>
+              <p className="text-emerald-100 mb-4">
                 Access comprehensive care guides, troubleshooting tips, and expert advice for every plant type.
               </p>
-              <div className="flex items-center text-emerald-500 font-semibold">
+              <div className="flex items-center text-emerald-400 font-semibold">
                 <span>Learn More</span>
                 <span className="ml-2">→</span>
               </div>
@@ -205,29 +192,29 @@ const LandingPage = () => {
       </div>
 
       {/* Stats Section */}
-      <div className="py-20 bg-gradient-to-r from-green-400 to-emerald-400 fadein-on-scroll opacity-0 translate-y-8 transition-all duration-1000">
+      <div className="py-20 bg-gradient-to-br from-[#0f2027] via-[#203a43] to-[#2c5364] fadein-on-scroll opacity-0 translate-y-8 transition-all duration-1000">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
             <div>
-              <div className="text-4xl font-bold text-emerald-900 mb-2">10,000+</div>
-              <div className="text-emerald-800">Happy Gardeners</div>
+              <div className="text-4xl font-bold text-emerald-300 mb-2">10,000+</div>
+              <div className="text-emerald-100">Happy Gardeners</div>
             </div>
             <div>
-              <div className="text-4xl font-bold text-emerald-900 mb-2">50,000+</div>
-              <div className="text-emerald-800">Plants Cared For</div>
+              <div className="text-4xl font-bold text-emerald-300 mb-2">50,000+</div>
+              <div className="text-emerald-100">Plants Cared For</div>
             </div>
             <div>
-              <div className="text-4xl font-bold text-emerald-900 mb-2">99%</div>
-              <div className="text-emerald-800">Success Rate</div>
+              <div className="text-4xl font-bold text-emerald-300 mb-2">99%</div>
+              <div className="text-emerald-100">Success Rate</div>
             </div>
           </div>
         </div>
       </div>
 
       {/* CTA Section */}
-      <div className="py-20 bg-zinc-900 fadein-on-scroll opacity-0 translate-y-8 transition-all duration-1000">
+      <div className="py-20 bg-gradient-to-br from-[#0f2027] via-[#203a43] to-[#2c5364] fadein-on-scroll opacity-0 translate-y-8 transition-all duration-1000">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-4xl md:text-5xl font-bold text-emerald-100 mb-6">
+          <h2 className="text-4xl md:text-5xl font-bold text-emerald-200 mb-6">
             Ready to Transform Your Garden?
           </h2>
           <p className="text-xl text-emerald-300 mb-8">
@@ -235,7 +222,7 @@ const LandingPage = () => {
           </p>
           <Link
             to="/register"
-            className="bg-yellow-400 hover:bg-yellow-500 text-emerald-900 px-10 py-4 rounded-full font-bold text-lg transition-all duration-300 transform hover:scale-105 hover:shadow-2xl active:scale-95 shadow-lg focus:outline-none focus:ring-4 focus:ring-yellow-300 animate-pulse-cta"
+            className="bg-emerald-700 hover:bg-emerald-600 text-white px-10 py-4 rounded-full font-bold text-lg transition-all duration-300 transform hover:scale-105 hover:shadow-2xl active:scale-95 shadow-lg focus:outline-none focus:ring-4 focus:ring-emerald-800 animate-pulse-cta"
           >
             <span className="inline-block mr-2 animate-bounce">🌱</span> Get Started
           </Link>
