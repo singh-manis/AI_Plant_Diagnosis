@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="bgGradient" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fef9c3"/>
+      <stop offset="100%" stop-color="#bbf7d0"/>
+    </radialGradient>
+    <linearGradient id="plantGradient" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#34d399"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+    <radialGradient id="sunGradient" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fde68a"/>
+      <stop offset="100%" stop-color="#fbbf24"/>
+    </radialGradient>
+    <linearGradient id="stemGradient" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4ade80"/>
+      <stop offset="100%" stop-color="#166534"/>
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <circle cx="16" cy="16" r="16" fill="url(#bgGradient)"/>
+  <!-- Sun -->
+  <circle cx="24" cy="8" r="5" fill="url(#sunGradient)" opacity="0.85"/>
+  <!-- Sparkles -->
+  <g opacity="0.7">
+    <circle cx="27" cy="5" r="0.8" fill="#fffbe6"/>
+    <circle cx="21" cy="4" r="0.5" fill="#fffbe6"/>
+    <circle cx="28" cy="11" r="0.5" fill="#fffbe6"/>
+    <circle cx="25" cy="14" r="0.6" fill="#fffbe6"/>
+    <circle cx="19" cy="9" r="0.4" fill="#fffbe6"/>
+  </g>
+  <!-- Plant Leaves -->
+  <ellipse cx="16" cy="20" rx="6.5" ry="9.5" fill="url(#plantGradient)"/>
+  <path d="M16 20 Q14 14 8 12 Q14 13 16 6 Q18 13 24 12 Q18 14 16 20 Z" fill="#059669" fill-opacity="0.7"/>
+  <path d="M16 20 Q15 15 11 14 Q15 16 16 9 Q17 16 21 14 Q17 15 16 20 Z" fill="#34d399" fill-opacity="0.7"/>
+  <!-- Plant Stem -->
+  <rect x="14.5" y="20" width="3" height="7" rx="1.5" fill="url(#stemGradient)"/>
+  <ellipse cx="16" cy="27" rx="2" ry="1" fill="#047857" fill-opacity="0.5"/>
+  <!-- Techy Sparkle (AI) -->
+  <g>
+    <circle cx="10" cy="9" r="1" fill="#a7f3d0"/>
+    <rect x="9.6" y="8.1" width="0.8" height="1.8" rx="0.4" fill="#34d399"/>
+    <rect x="8.6" y="8.6" width="1.8" height="0.8" rx="0.4" fill="#34d399"/>
+  </g>
+</svg> 

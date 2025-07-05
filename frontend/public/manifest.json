@@ -1,0 +1,15 @@
+{
+  "short_name": "PlantCare",
+  "name": "AI Plant Care Platform",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#059669",
+  "background_color": "#fef9c3"
+}
