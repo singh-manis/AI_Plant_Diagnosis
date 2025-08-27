@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { aiAPI, plantsAPI, weatherAPI } from '../../services/api';
 
 const AIAssistant = () => {
@@ -46,7 +48,7 @@ const AIAssistant = () => {
       const response = await aiAPI.identifyPlant(selectedImage);
       setResult({
         type: 'identification',
-        data: response.data
+        data: response.data.identification || response.data
       });
     } catch (error) {
       setError('Failed to identify plant. Please try again.');
@@ -68,7 +70,7 @@ const AIAssistant = () => {
       const response = await aiAPI.diagnosePlant(selectedImage);
       setResult({
         type: 'diagnosis',
-        data: response.data
+        data: response.data.diagnosis || response.data
       });
     } catch (error) {
       setError('Failed to diagnose plant. Please try again.');
@@ -91,7 +93,7 @@ const AIAssistant = () => {
       const response = await aiAPI.getCareAdvice(careAdvice.plantSpecies, careAdvice.question);
       setResult({
         type: 'care-advice',
-        data: response.data
+        data: { advice: response.data.advice || response.data }
       });
     } catch (error) {
       setError('Failed to get care advice. Please try again.');
@@ -219,8 +221,8 @@ const AIAssistant = () => {
                 </div>
               )}
               {result.data.description && (
-                <div>
-                  <p className="text-sm text-zinc-300">{result.data.description}</p>
+                <div className="prose prose-invert max-w-none prose-p:my-1 prose-li:my-0.5">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{result.data.description}</ReactMarkdown>
                 </div>
               )}
             </div>
@@ -270,7 +272,9 @@ const AIAssistant = () => {
               {result.data.treatment && (
                 <div className="bg-emerald-900/50 border border-emerald-800 rounded-lg p-4">
                   <p className="text-sm font-medium text-emerald-300 mb-2">💊 Treatment Plan:</p>
-                  <div className="text-sm text-emerald-200 whitespace-pre-line">{result.data.treatment}</div>
+                  <div className="prose prose-invert max-w-none prose-p:my-1 prose-li:my-0.5 text-sm">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{result.data.treatment}</ReactMarkdown>
+                  </div>
                 </div>
               )}
 
@@ -294,7 +298,9 @@ const AIAssistant = () => {
               {result.data.additionalNotes && (
                 <div className="bg-zinc-800/80 rounded-lg p-4">
                   <p className="text-sm font-medium text-zinc-300 mb-2">📝 Additional Notes:</p>
-                  <p className="text-sm text-zinc-200">{result.data.additionalNotes}</p>
+                  <div className="prose prose-invert max-w-none prose-p:my-1 prose-li:my-0.5 text-sm">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{result.data.additionalNotes}</ReactMarkdown>
+                  </div>
                 </div>
               )}
             </div>
@@ -315,8 +321,8 @@ const AIAssistant = () => {
                   )}
                 </div>
               </div>
-              <div className="bg-blue-900/50 border border-blue-800 rounded-lg p-3">
-                <p className="text-sm text-blue-200">{result.data.advice || 'No specific advice available'}</p>
+              <div className="bg-blue-900/50 border border-blue-800 rounded-lg p-3 prose prose-invert max-w-none prose-p:my-1 prose-li:my-0.5">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{result.data.advice || 'No specific advice available'}</ReactMarkdown>
               </div>
             </div>
           </div>

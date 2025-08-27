@@ -6,353 +6,612 @@ class AIService {
     this.baseURL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
   }
 
-  async identifyPlant(imageBase64) {
+  async identifyPlant(imageBase64, mimeType = 'image/jpeg') {
     try {
       if (!this.apiKey) {
-        // Mock response for testing when API key is not available
-        return this.getMockPlantIdentification();
+        throw new Error('GEMINI_API_KEY is not configured. Please add it to your .env file.');
       }
       
-      const prompt = "Identify this plant species. Return only the plant name and a brief description.";
-      const response = await this.callGeminiVision(prompt, imageBase64);
-      return response;
+      const prompt = `You are a world-class plant identification expert and botanist. Analyze this plant image with the precision of a scientist.
+
+Return ONLY valid minified JSON with these exact keys in snake_case:
+{
+  "species": string,                // scientific name if certain, else best guess common grouping
+  "common_name": string,            // best common name if known
+  "confidence": number,             // 0-100
+  "description": string             // brief distinguishing features seen in THIS image
+}
+
+Rules:
+- If unsure, lower confidence and state uncertainty in description. Do NOT hallucinate.
+- Do not include markdown or backticks. Output must be raw JSON.`;
+
+      const response = await this.callGeminiVision(prompt, imageBase64, mimeType);
+      if (process.env.NODE_ENV !== 'test') {
+        console.log('[AI][identify] mimeType=', mimeType, ' raw=', String(response).slice(0, 200));
+      }
+      const parsed = this.parseIdentificationJson(response);
+      if (process.env.NODE_ENV === 'development') {
+        parsed.debug = { raw: String(response).slice(0, 500) };
+      }
+      return parsed;
     } catch (error) {
       console.error('AI Identification error:', error);
-      return this.getMockPlantIdentification();
+      if (error.message.includes('GEMINI_API_KEY')) {
+        throw new Error('AI service not configured. Please add GEMINI_API_KEY to your environment variables.');
+      }
+      throw new Error(`Plant identification failed: ${error.message}`);
     }
   }
 
-  async diagnosePlant(imageBase64) {
+  async diagnosePlant(imageBase64, mimeType = 'image/jpeg') {
     try {
       if (!this.apiKey) {
-        return this.getMockPlantDiagnosis();
+        throw new Error('GEMINI_API_KEY is not configured. Please add it to your .env file.');
       }
       
-      const prompt = `Analyze this plant image for comprehensive health assessment. Provide detailed analysis including:
+      const prompt = `You are a plant health expert. Analyze this plant image for health issues and provide:
 
-1. PRIMARY DIAGNOSIS: Main health issue or condition
-2. SEVERITY LEVEL: Low/Moderate/High/Critical
-3. VISUAL SYMPTOMS: Specific symptoms visible in the image
-4. ROOT CAUSE: Likely cause of the problem
-5. TREATMENT PLAN: Step-by-step treatment recommendations
-6. TIMELINE: Expected recovery time
-7. PREVENTION: How to prevent this issue in the future
-8. CONFIDENCE: Your confidence level in this diagnosis (0-100%)
+**HEALTH ASSESSMENT:**
+- Primary diagnosis with confidence level (0-100%)
+- Severity: Low/Moderate/High/Critical
+- Visual symptoms observed
+- Likely root cause
 
-Format the response in a structured, easy-to-read manner with clear sections.`;
-      
-      const response = await this.callGeminiVision(prompt, imageBase64);
-      return response;
+**TREATMENT PLAN:**
+- Immediate actions needed
+- Step-by-step treatment
+- Expected recovery timeline
+- Prevention measures
+
+**FORMAT:**
+Use clear sections with emojis, bullet points, and structured formatting. Be specific and actionable.`;
+
+      const response = await this.callGeminiVision(prompt, imageBase64, mimeType);
+      return this.formatPlantDiagnosis(response);
     } catch (error) {
       console.error('AI Diagnosis error:', error);
-      return this.getMockPlantDiagnosis();
+      if (error.message.includes('GEMINI_API_KEY')) {
+        throw new Error('AI service not configured. Please add GEMINI_API_KEY to your environment variables.');
+      }
+      throw new Error(`Plant diagnosis failed: ${error.message}`);
     }
   }
 
   async getCareAdvice(plantSpecies, question) {
     try {
       if (!this.apiKey) {
-        // Mock response for testing when API key is not available
-        return this.getMockCareAdvice(plantSpecies, question);
+        throw new Error('GEMINI_API_KEY is not configured. Please add it to your .env file.');
       }
       
-      const prompt = `Provide specific care advice for ${plantSpecies}. Question: ${question}. Give practical, actionable recommendations.`;
+      // Make the AI truly intelligent and responsive
+      let prompt;
+      
+      if (!question || question.trim() === '') {
+        // No question provided - give comprehensive care overview
+        prompt = `You are a world-class plant care specialist and personal plant doctor. ${plantSpecies} is your patient.
+
+**TASK:** Provide a comprehensive, personalized care consultation for ${plantSpecies}.
+
+**APPROACH:**
+- Act like a real plant doctor doing a consultation
+- Give specific, actionable advice for ${plantSpecies}
+- Include common problems and solutions
+- Make it feel personal and caring
+- Be conversational but professional
+
+**INCLUDE:**
+🌱 **Essential Care Basics** (what this plant absolutely needs)
+🌿 **Growth & Development** (how to help it thrive)
+💧 **Watering & Feeding** (specific to this plant type)
+☀️ **Light & Environment** (optimal conditions)
+⚠️ **Common Issues & Solutions** (what to watch for)
+💡 **Pro Tips** (expert secrets for this plant)
+
+**FORMAT:** Be conversational, use emojis, give specific advice. Make it feel like a personal consultation with a plant expert.`;
+      } else {
+        // Question provided - give targeted, intelligent answer
+        const questionType = this.analyzeQuestionType(question);
+        
+        prompt = `You are a world-class plant care specialist and personal plant doctor. ${plantSpecies} is your patient, and they've asked: "${question}"
+
+**TASK:** Provide a targeted, intelligent answer to this specific question about ${plantSpecies}.
+
+**APPROACH:**
+- Answer the EXACT question asked - don't give generic advice
+- Be like a real plant doctor answering a specific concern
+- Provide different advice than you would for other plants
+- Give specific, actionable steps
+- Be conversational and caring
+
+**RESPONSE STRUCTURE:**
+🌱 **Direct Answer** - Specifically address "${question}"
+🌿 **Why This Matters for ${plantSpecies}** - Plant-specific context
+💡 **Step-by-Step Solution** - Clear, actionable steps
+⚠️ **Important Notes** - Warnings and tips specific to this plant
+🎯 **Pro Tips** - Expert advice for this specific situation
+
+**IMPORTANT:** 
+- Focus ONLY on what was asked
+- Give different advice than generic care tips
+- Make it feel like a personal consultation
+- Be specific and actionable
+- Use conversational, caring language`;
+      }
+
       const response = await this.callGeminiText(prompt);
-      return response;
+      return this.formatCareAdvice(response, plantSpecies, question);
     } catch (error) {
       console.error('AI Care Advice error:', error);
-      return this.getMockCareAdvice(plantSpecies, question);
+      if (error.message.includes('GEMINI_API_KEY')) {
+        throw new Error('AI service not configured. Please add GEMINI_API_KEY to your environment variables.');
+      }
+      throw new Error(`Care advice failed: ${error.message}`);
+    }
+  }
+
+  // Helper method to analyze question type for better responses
+  analyzeQuestionType(question) {
+    const q = question.toLowerCase();
+    
+    if (q.includes('plant') || q.includes('grow') || q.includes('propagate')) {
+      return 'planting';
+    } else if (q.includes('soil') || q.includes('potting') || q.includes('repot')) {
+      return 'soil';
+    } else if (q.includes('water') || q.includes('watering')) {
+      return 'watering';
+    } else if (q.includes('light') || q.includes('sun') || q.includes('shade')) {
+      return 'lighting';
+    } else if (q.includes('fertiliz') || q.includes('feed') || q.includes('nutrient')) {
+      return 'fertilizing';
+    } else if (q.includes('prune') || q.includes('trim') || q.includes('cut')) {
+      return 'pruning';
+    } else if (q.includes('temperature') || q.includes('cold') || q.includes('heat')) {
+      return 'temperature';
+    } else if (q.includes('pest') || q.includes('disease') || q.includes('problem')) {
+      return 'problems';
+    } else if (q.includes('flower') || q.includes('bloom') || q.includes('bud')) {
+      return 'flowering';
+    } else {
+      return 'general';
+    }
+  }
+
+  // Helper method to provide plant-specific context
+  getPlantContext(plantSpecies) {
+    const plant = plantSpecies.toLowerCase();
+    
+    // Provide specific context for common plants to get better responses
+    if (plant.includes('monstera') || plant.includes('swiss cheese')) {
+      return `Monstera deliciosa is a tropical plant native to Central America. It's known for its distinctive split leaves and aerial roots. It's a climbing plant that can grow quite large and prefers bright, indirect light with high humidity.`;
+    } else if (plant.includes('snake') || plant.includes('sansevieria')) {
+      return `Snake Plant (Sansevieria trifasciata) is a hardy, low-maintenance plant native to West Africa. It's excellent for beginners, tolerates low light, and is known for its air-purifying qualities. It's drought-tolerant and prefers well-draining soil.`;
+    } else if (plant.includes('pothos') || plant.includes('epipremnum')) {
+      return `Pothos (Epipremnum aureum) is a versatile trailing plant native to the Solomon Islands. It has heart-shaped leaves and can grow in various light conditions. It's excellent for hanging baskets and is very forgiving for beginners.`;
+    } else if (plant.includes('zz') || plant.includes('zamioculcas')) {
+      return `ZZ Plant (Zamioculcas zamiifolia) is a drought-tolerant plant native to Eastern Africa. It has glossy, dark green leaves and can survive in low-light conditions with minimal care. It's perfect for busy people or low-light spaces.`;
+    } else if (plant.includes('ficus') || plant.includes('fig')) {
+      return `Ficus plants are popular indoor trees native to tropical regions. They prefer bright, indirect light and consistent watering. They can be sensitive to changes in environment and may drop leaves when stressed.`;
+    } else if (plant.includes('aloe') || plant.includes('succulent')) {
+      return `Aloe and succulents are drought-tolerant plants that store water in their leaves. They prefer bright light, well-draining soil, and infrequent watering. They're perfect for sunny windowsills and low-maintenance care.`;
+    } else if (plant.includes('orchid')) {
+      return `Orchids are epiphytic plants that grow on trees in nature. They prefer bright, indirect light, high humidity, and well-draining orchid mix. They have specific watering and fertilizing needs that differ from regular houseplants.`;
+    } else if (plant.includes('cactus')) {
+      return `Cacti are desert plants adapted to dry, hot conditions. They need bright light, very well-draining soil, and minimal watering. They're excellent for sunny locations and require very little maintenance.`;
+    } else if (plant.includes('fern')) {
+      return `Ferns are moisture-loving plants that prefer indirect light and high humidity. They need consistently moist soil and regular misting. They're perfect for bathrooms or humid environments.`;
+    } else if (plant.includes('palm')) {
+      return `Palms are tropical plants that add a lush, tropical feel to spaces. They prefer bright, indirect light and consistent moisture. They can be sensitive to overwatering and need well-draining soil.`;
+    } else {
+      return `${plantSpecies} is a unique plant that may have specific care requirements. Consider its natural habitat, growth patterns, and specific needs when providing care advice.`;
     }
   }
 
   async generateCareSchedule(plantSpecies, location, conditions) {
     try {
       if (!this.apiKey) {
-        return this.getMockCareSchedule(plantSpecies, location, conditions);
+        throw new Error('GEMINI_API_KEY is not configured. Please add it to your .env file.');
       }
       
-      const prompt = `Create a detailed, personalized care schedule for ${plantSpecies} in ${location} with these conditions: ${conditions}. 
-
-Please provide a comprehensive schedule including:
-- Watering frequency and best practices
-- Fertilizing schedule and recommendations
-- Pruning/trimming guidelines
-- Repotting timeline and tips
-- Light requirements and positioning
-- Temperature and humidity preferences
-- Seasonal adjustments
-- Common issues to watch for
-
-Format the response in a clear, easy-to-follow structure with specific timeframes and actionable steps.`;
+      const plantContext = this.getPlantContext(plantSpecies);
       
+      const prompt = `You are an expert plant care specialist creating a personalized care schedule for ${plantSpecies}.
+
+**PLANT CONTEXT:**
+${plantContext}
+
+**LOCATION:** ${location}
+**CURRENT CONDITIONS:** ${conditions || 'Standard indoor conditions'}
+
+**CREATE A DETAILED, PERSONALIZED CARE SCHEDULE INCLUDING:**
+
+🌱 **WATERING SCHEDULE**
+- Specific frequency for ${plantSpecies} in ${location}
+- How to check soil moisture
+- Seasonal adjustments needed
+- Signs of over/under watering
+
+🌿 **FERTILIZING PLAN**
+- Best fertilizer type for ${plantSpecies}
+- Application frequency and timing
+- Seasonal adjustments
+- How to apply safely
+
+✂️ **MAINTENANCE TASKS**
+- Pruning schedule and techniques
+- Repotting timeline and process
+- Cleaning and grooming needs
+- Pest prevention measures
+
+☀️ **ENVIRONMENTAL NEEDS**
+- Optimal light positioning for ${location}
+- Temperature and humidity requirements
+- Seasonal location adjustments
+- Protection from environmental stress
+
+📅 **WEEKLY/MONTHLY CHECKLIST**
+- Daily tasks (if any)
+- Weekly maintenance
+- Monthly deep care
+- Seasonal special care
+
+⚠️ **SPECIFIC CONSIDERATIONS FOR ${plantSpecies}**
+- Unique needs of this plant type
+- Common problems and solutions
+- Growth patterns and expectations
+- Special care requirements
+
+**FORMAT:**
+- Use clear sections with emojis
+- Provide specific timeframes and measurements
+- Include actionable steps
+- Make it feel like a personal care plan for this specific plant`;
+
       const response = await this.callGeminiText(prompt);
-      return response;
+      return this.formatCareSchedule(response, plantSpecies, location, conditions);
     } catch (error) {
       console.error('AI Care Schedule error:', error);
-      return this.getMockCareSchedule(plantSpecies, location, conditions);
+      if (error.message.includes('GEMINI_API_KEY')) {
+        throw new Error('AI service not configured. Please add GEMINI_API_KEY to your environment variables.');
+      }
+      throw new Error(`Care schedule generation failed: ${error.message}`);
     }
   }
 
   async predictGrowth(plantData) {
     try {
       if (!this.apiKey) {
-        return this.getMockGrowthPrediction(plantData);
+        throw new Error('GEMINI_API_KEY is not configured. Please add it to your .env file.');
       }
+      
       const { species, ageWeeks, health, lastRepot, lastPrune, location, notes } = plantData;
-      const prompt = `Predict the growth of a ${species} plant over the next month. Current age: ${ageWeeks} weeks. Health: ${health}. Last repot: ${lastRepot}. Last prune: ${lastPrune}. Location: ${location}. Notes: ${notes}. Give a friendly, visual description of expected changes (new leaves, height, etc).`;
+      const plantContext = this.getPlantContext(species);
+      
+      const prompt = `You are an expert plant growth specialist predicting the development of a ${species} plant.
+
+**PLANT CONTEXT:**
+${plantContext}
+
+**CURRENT PLANT STATUS:**
+- Age: ${ageWeeks} weeks
+- Health: ${health}
+- Last repot: ${lastRepot || 'Unknown'}
+- Last prune: ${lastPrune || 'Unknown'}
+- Location: ${location}
+- Notes: ${notes || 'None'}
+
+**PROVIDE A DETAILED GROWTH PREDICTION FOR THE NEXT 3 MONTHS:**
+
+🌱 **GROWTH EXPECTATIONS**
+- New leaf development patterns
+- Height and width changes
+- Root growth and pot space needs
+- Branching or trailing growth
+
+📈 **DEVELOPMENT TIMELINE**
+- Week 1-4: What to expect
+- Week 5-8: Growth milestones
+- Week 9-12: Mature development
+- Seasonal growth patterns
+
+💡 **CARE RECOMMENDATIONS FOR OPTIMAL GROWTH**
+- Watering adjustments needed
+- Fertilizing schedule for growth
+- Light positioning changes
+- Repotting timeline
+
+⚠️ **POTENTIAL CHALLENGES & SOLUTIONS**
+- Growth obstacles to watch for
+- How to prevent stunted growth
+- Signs of healthy vs. unhealthy growth
+- When to intervene
+
+🎯 **GROWTH OPTIMIZATION TIPS**
+- Best practices for this specific plant
+- Environmental adjustments
+- Care routine modifications
+- Growth monitoring techniques
+
+**FORMAT:**
+- Use encouraging, friendly language
+- Include specific measurements and timeframes
+- Provide actionable growth tips
+- Make it feel like a personal growth consultation`;
+
       const response = await this.callGeminiText(prompt);
-      return response;
+      return this.formatGrowthPrediction(response, plantData);
     } catch (error) {
       console.error('AI Growth Prediction error:', error);
-      return this.getMockGrowthPrediction(plantData);
+      if (error.message.includes('GEMINI_API_KEY')) {
+        throw new Error('AI service not configured. Please add GEMINI_API_KEY to your environment variables.');
+      }
+      throw new Error(`Growth prediction failed: ${error.message}`);
     }
   }
 
   async getClimateBasedCare(plantData, weatherData) {
     try {
       if (!this.apiKey) {
-        return this.getMockClimateBasedCare(plantData, weatherData);
+        throw new Error('GEMINI_API_KEY is not configured. Please add it to your .env file.');
       }
       
       const { species, location, conditions } = plantData;
       const { temperature, humidity, forecast, season } = weatherData;
       
-      const prompt = `Provide climate-optimized care recommendations for ${species} in ${location} with current conditions: ${conditions}.
+      const prompt = `Provide climate-optimized care recommendations for ${species} in ${location}.
 
-Current weather data:
-- Temperature: ${temperature}
-- Humidity: ${humidity}
+**CURRENT WEATHER:**
+- Temperature: ${temperature}°C
+- Humidity: ${humidity}%
 - Season: ${season}
-- Forecast: ${forecast}
+- Forecast: ${forecast || 'Stable conditions'}
 
-Please provide:
-1. WATERING ADJUSTMENTS: How to modify watering based on current weather
-2. LIGHT POSITIONING: Optimal placement considering current conditions
-3. TEMPERATURE PROTECTION: Any needed adjustments for temperature
-4. HUMIDITY MANAGEMENT: Recommendations for humidity levels
-5. SEASONAL ADAPTATIONS: Specific changes for current season
-6. WEATHER ALERTS: Any immediate actions needed based on forecast
-7. OPTIMAL TIMING: Best times for care activities given weather
+**CARE ADJUSTMENTS NEEDED:**
+🌡️ **Temperature Management**
+- Protection measures
+- Optimal positioning
+- Seasonal adjustments
 
-Format as clear, actionable recommendations.`;
-      
+💧 **Watering Modifications**
+- Frequency changes
+- Amount adjustments
+- Timing optimization
+
+☀️ **Light & Positioning**
+- Optimal placement
+- Shade requirements
+- Seasonal movement
+
+🛡️ **Protection Strategies**
+- Weather alerts
+- Immediate actions
+- Preventive measures
+
+**FORMAT:** Use clear sections with emojis and actionable recommendations.`;
+
       const response = await this.callGeminiText(prompt);
-      return response;
+      return this.formatClimateCare(response, plantData, weatherData);
     } catch (error) {
       console.error('AI Climate Care error:', error);
-      return this.getMockClimateBasedCare(plantData, weatherData);
+      if (error.message.includes('GEMINI_API_KEY')) {
+        throw new Error('AI service not configured. Please add GEMINI_API_KEY to your environment variables.');
+      }
+      throw new Error(`Climate-based care failed: ${error.message}`);
     }
   }
 
-  async callGeminiVision(prompt, imageBase64) {
-    const response = await axios.post(
-      `${this.baseURL}?key=${this.apiKey}`,
-      {
-        contents: [{
-          parts: [
-            { text: prompt },
-            {
-              inline_data: {
-                mime_type: "image/jpeg",
-                data: imageBase64
+  async callGeminiVision(prompt, imageBase64, mimeType = 'image/jpeg') {
+    try {
+      const response = await axios.post(
+        `${this.baseURL}?key=${this.apiKey}`,
+        {
+          generationConfig: {
+            temperature: 0.2,
+            topP: 0.9,
+            topK: 40,
+            maxOutputTokens: 1024
+          },
+          contents: [{
+            parts: [
+              { text: prompt },
+              {
+                inline_data: {
+                  mime_type: mimeType || 'image/jpeg',
+                  data: imageBase64
+                }
               }
-            }
-          ]
-        }]
+            ]
+          }]
+        },
+        {
+          timeout: 30000, // 30 second timeout
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (!response.data.candidates || !response.data.candidates[0] || !response.data.candidates[0].content) {
+        throw new Error('Invalid response from Gemini API');
       }
-    );
-    return response.data.candidates[0].content.parts[0].text;
+
+      const parts = response.data.candidates[0].content.parts || [];
+      const text = parts.map(p => p.text).filter(Boolean).join('');
+      if (!text) {
+        throw new Error('Empty content from Gemini API');
+      }
+      return text;
+    } catch (error) {
+      if (error.response) {
+        throw new Error(`Gemini API error: ${error.response.data.error?.message || error.response.statusText}`);
+      } else if (error.request) {
+        throw new Error('No response from Gemini API. Please check your internet connection.');
+      } else {
+        throw new Error(`Request failed: ${error.message}`);
+      }
+    }
   }
 
   async callGeminiText(prompt) {
-    const response = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${this.apiKey}`,
-      {
-        contents: [{
-          parts: [{ text: prompt }]
-        }]
+    try {
+      const response = await axios.post(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${this.apiKey}`,
+        {
+          generationConfig: {
+            temperature: 0.3,
+            topP: 0.9,
+            topK: 40,
+            maxOutputTokens: 1200
+          },
+          contents: [{
+            parts: [{ text: prompt }]
+          }]
+        },
+        {
+          timeout: 30000, // 30 second timeout
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (!response.data.candidates || !response.data.candidates[0] || !response.data.candidates[0].content) {
+        throw new Error('Invalid response from Gemini API');
       }
-    );
-    return response.data.candidates[0].content.parts[0].text;
-  }
 
-  // Mock responses for testing when API key is not available
-  getMockPlantIdentification() {
-    const plants = [
-      "Monstera deliciosa\nA popular tropical plant known for its distinctive split leaves. Native to Central America, it's commonly called the Swiss Cheese Plant due to its unique leaf perforations.",
-      "Snake Plant (Sansevieria trifasciata)\nA hardy, low-maintenance plant with tall, upright leaves. Excellent for beginners and known for its air-purifying qualities.",
-      "Pothos (Epipremnum aureum)\nA versatile trailing plant with heart-shaped leaves. Perfect for hanging baskets and known for its ability to thrive in various light conditions.",
-      "ZZ Plant (Zamioculcas zamiifolia)\nA drought-tolerant plant with glossy, dark green leaves. Known for its ability to survive in low-light conditions with minimal care."
-    ];
-    return plants[Math.floor(Math.random() * plants.length)];
-  }
-
-  getMockPlantDiagnosis() {
-    const diagnoses = [
-      {
-        condition: "Overwatering",
-        severity: "Moderate",
-        confidence: 85,
-        symptoms: "Yellowing leaves, soft/mushy stems, waterlogged soil, root rot visible",
-        rootCause: "Excessive watering frequency or poor drainage",
-        treatment: "1. Stop watering immediately\n2. Remove from pot and inspect roots\n3. Trim any black/mushy roots\n4. Repot in fresh, well-draining soil\n5. Resume watering only when top 2 inches are dry",
-        timeline: "2-4 weeks for recovery",
-        prevention: "Use well-draining soil, check moisture before watering, ensure pot has drainage holes",
-        additionalNotes: "Consider using a moisture meter to prevent overwatering in the future."
-      },
-      {
-        condition: "Nutrient Deficiency",
-        severity: "Low",
-        confidence: 78,
-        symptoms: "Pale leaves with green veins, stunted growth, yellowing between veins",
-        rootCause: "Insufficient fertilization or poor soil quality",
-        treatment: "1. Apply balanced liquid fertilizer\n2. Consider repotting with fresh soil\n3. Monitor new growth for improvement\n4. Maintain regular feeding schedule",
-        timeline: "3-6 weeks for visible improvement",
-        prevention: "Use quality potting mix, fertilize regularly during growing season",
-        additionalNotes: "Different deficiencies show different symptoms - this appears to be iron or nitrogen deficiency."
-      },
-      {
-        condition: "Pest Infestation",
-        severity: "High",
-        confidence: 92,
-        symptoms: "Small white spots, webbing, visible insects, sticky residue on leaves",
-        rootCause: "Spider mites or mealybugs, likely due to dry conditions",
-        treatment: "1. Isolate plant immediately\n2. Wash leaves with mild soap solution\n3. Apply neem oil or insecticidal soap\n4. Repeat treatment every 7 days\n5. Increase humidity around plant",
-        timeline: "2-3 weeks to eliminate pests",
-        prevention: "Regular inspection, maintain proper humidity, avoid overcrowding plants",
-        additionalNotes: "Check other nearby plants for signs of infestation."
-      },
-      {
-        condition: "Insufficient Light",
-        severity: "Moderate",
-        confidence: 81,
-        symptoms: "Leggy growth, small leaves, pale coloring, leaning toward light source",
-        rootCause: "Plant not receiving adequate light for its species",
-        treatment: "1. Move to brighter location gradually\n2. Consider supplemental grow lights\n3. Rotate plant regularly for even growth\n4. Prune leggy stems to encourage bushiness",
-        timeline: "4-8 weeks for new growth to appear",
-        prevention: "Research light requirements for plant species, use light meters if needed",
-        additionalNotes: "Sudden exposure to bright light can cause sunburn - acclimate gradually."
+      return response.data.candidates[0].content.parts[0].text;
+    } catch (error) {
+      if (error.response) {
+        throw new Error(`Gemini API error: ${error.response.data.error?.message || error.response.statusText}`);
+      } else if (error.request) {
+        throw new Error('No response from Gemini API. Please check your internet connection.');
+      } else {
+        throw new Error(`Request failed: ${error.message}`);
       }
-    ];
-    
-    const diagnosis = diagnoses[Math.floor(Math.random() * diagnoses.length)];
-    return `PRIMARY DIAGNOSIS: ${diagnosis.condition}
-SEVERITY LEVEL: ${diagnosis.severity}
-CONFIDENCE: ${diagnosis.confidence}%
-
-VISUAL SYMPTOMS:
-${diagnosis.symptoms}
-
-ROOT CAUSE:
-${diagnosis.rootCause}
-
-TREATMENT PLAN:
-${diagnosis.treatment}
-
-TIMELINE:
-${diagnosis.timeline}
-
-PREVENTION:
-${diagnosis.prevention}
-
-ADDITIONAL NOTES:
-${diagnosis.additionalNotes}`;
+    }
   }
 
-  getMockCareAdvice(plantSpecies, question) {
-    return `Care advice for ${plantSpecies}: ${question || 'general care'}\n\nWater when the top inch of soil feels dry. Provide bright, indirect light. Maintain humidity around 50-60%. Fertilize monthly during growing season with balanced fertilizer. Repot every 1-2 years in well-draining soil.`;
+  // Formatting methods for better response structure
+  formatPlantIdentification(response) {
+    // If the response is already well-formatted, return as is
+    if (response.includes('**') || response.includes('🌱') || response.includes('•')) {
+      return response;
+    }
+
+    // Otherwise, add some basic formatting
+    return `🌱 **Plant Identification Results**
+
+${response}
+
+---
+*Identified using AI-powered plant recognition*`;
   }
 
-  getMockCareSchedule(plantSpecies, location, conditions) {
-    return `Personalized Care Schedule for ${plantSpecies} in ${location}:
+  // Strictly parse JSON returned by identifyPlant
+  parseIdentificationJson(rawText) {
+    // Some models wrap JSON in code fences or prose. Strip common wrappers.
+    const cleaned = rawText
+      .replace(/^```json\s*/i, '')
+      .replace(/^```\s*/i, '')
+      .replace(/```\s*$/i, '')
+      .trim();
+    let data;
+    try {
+      data = JSON.parse(cleaned);
+    } catch (e) {
+      // Fallback: try to extract JSON object via regex
+      const match = cleaned.match(/\{[\s\S]*\}/);
+      if (!match) {
+        return {
+          species: 'Unknown',
+          commonName: 'Unknown',
+          confidence: 0,
+          description: 'Unable to parse AI identification response.'
+        };
+      }
+      try {
+        data = JSON.parse(match[0]);
+      } catch {
+        return {
+          species: 'Unknown',
+          commonName: 'Unknown',
+          confidence: 0,
+          description: 'Unable to parse AI identification response.'
+        };
+      }
+    }
 
-🌱 WATERING SCHEDULE:
-• Water every 7-10 days during growing season (spring/summer)
-• Reduce to every 10-14 days in fall/winter
-• Check soil moisture before watering - top 1-2 inches should be dry
-• Use room temperature water and ensure good drainage
+    const species = data.species || data.scientific_name || 'Unknown';
+    const common = data.common_name || data.commonName || 'Unknown';
+    const confidence = typeof data.confidence === 'number' ? Math.round(data.confidence) : 0;
+    const description = data.description || '';
 
-🌿 FERTILIZING:
-• Apply balanced liquid fertilizer monthly during spring/summer
-• Use half-strength fertilizer for young plants
-• Stop fertilizing in fall/winter months
-• Consider slow-release fertilizer for consistent nutrition
-
-✂️ PRUNING & MAINTENANCE:
-• Remove dead or yellowing leaves as needed
-• Trim leggy growth to encourage bushiness
-• Prune after flowering to maintain shape
-• Clean leaves monthly with damp cloth
-
-🪴 REPOTTING:
-• Repot every 1-2 years in spring
-• Choose pot 1-2 inches larger than current
-• Use well-draining potting mix
-• Water thoroughly after repotting
-
-☀️ LIGHT & POSITIONING:
-• Provide bright, indirect light
-• Avoid direct sunlight to prevent leaf burn
-• Rotate plant weekly for even growth
-• Consider grow lights in low-light areas
-
-🌡️ TEMPERATURE & HUMIDITY:
-• Maintain 65-75°F (18-24°C) temperature
-• Keep humidity around 50-60%
-• Avoid cold drafts and heating vents
-• Use humidifier in dry conditions
-
-⚠️ WATCH FOR:
-• Yellow leaves (overwatering)
-• Brown tips (low humidity)
-• Leggy growth (insufficient light)
-• Pests (check regularly)
-
-This schedule is based on your plant's current conditions: ${conditions}`;
+    return { species, commonName: common, confidence, description };
   }
 
-  getMockGrowthPrediction(plantData) {
-    return `In the next month, your ${plantData.species} is likely to grow 2-3 new leaves and become noticeably fuller. Keep up the good care! 🌱`;
+  formatPlantDiagnosis(response) {
+    if (response.includes('**') || response.includes('🌱') || response.includes('•')) {
+      return response;
+    }
+
+    return `🔍 **Plant Health Diagnosis**
+
+${response}
+
+---
+*Diagnosis provided by AI-powered plant health analysis*`;
   }
 
-  getMockClimateBasedCare(plantData, weatherData) {
-    return `Climate-Optimized Care for ${plantData.species} in ${plantData.location}:
+  formatCareAdvice(response, plantSpecies, question) {
+    if (response.includes('**') || response.includes('🌱') || response.includes('•')) {
+      return response;
+    }
 
-🌡️ TEMPERATURE ADJUSTMENTS:
-• Current temperature: ${weatherData.temperature}
-• Move plant away from cold drafts if temperature drops below 60°F
-• Consider moving to warmer location during cold spells
-• Monitor for temperature stress signs
+    return `🌿 **Care Advice for ${plantSpecies}**
 
-💧 WATERING ADJUSTMENTS:
-• Reduce watering frequency in cooler weather
-• Increase humidity if indoor heating is active
-• Check soil moisture more frequently during temperature changes
-• Water in morning to allow drying before night
+${response}
 
-☀️ LIGHT POSITIONING:
-• Maximize natural light exposure during shorter days
-• Consider supplemental lighting if needed
-• Rotate plant weekly for even growth
-• Protect from intense afternoon sun if temperatures are high
+---
+*Care advice generated by AI plant care expert*`;
+  }
 
-🌧️ WEATHER-BASED RECOMMENDATIONS:
-• ${weatherData.forecast ? `Based on forecast: ${weatherData.forecast}` : 'Monitor local weather for extreme conditions'}
-• Bring outdoor plants inside if frost is expected
-• Increase ventilation during humid periods
-• Protect from strong winds if applicable
+  formatCareSchedule(response, plantSpecies, location, conditions) {
+    if (response.includes('**') || response.includes('🌱') || response.includes('•')) {
+      return response;
+    }
 
-⏰ OPTIMAL CARE TIMING:
-• Water early morning for best absorption
-• Fertilize during active growth periods
-• Prune during dormancy or early spring
-• Repot in spring when temperatures are stable
+    return `📅 **Care Schedule for ${plantSpecies}**
 
-🛡️ PROTECTIVE MEASURES:
-• Use humidity trays during dry periods
-• Consider plant covers for temperature protection
-• Monitor for weather-related stress signs
-• Adjust care schedule based on weather patterns`;
+${response}
+
+---
+*Personalized for ${location} with conditions: ${conditions}*`;
+  }
+
+  formatGrowthPrediction(response, plantData) {
+    if (response.includes('**') || response.includes('🌱') || response.includes('•')) {
+      return response;
+    }
+
+    return `📈 **Growth Prediction for ${plantData.species}**
+
+${response}
+
+---
+*Prediction based on current plant data and AI analysis*`;
+  }
+
+  formatClimateCare(response, plantData, weatherData) {
+    if (response.includes('**') || response.includes('🌱') || response.includes('•')) {
+      return response;
+    }
+
+    return `🌤️ **Climate-Based Care for ${plantData.species}**
+
+${response}
+
+---
+*Optimized for current weather conditions*`;
   }
 }
 

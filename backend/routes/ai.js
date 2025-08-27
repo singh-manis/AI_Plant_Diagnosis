@@ -2,10 +2,10 @@ const express = require('express');
 const router = express.Router();
 const aiController = require('../controllers/aiController');
 const auth = require('../middleware/auth');
-const upload = require('../middleware/upload');
+const { upload, handleUploadError } = require('../middleware/upload');
 
-router.post('/identify', auth, upload.single('image'), aiController.identifyPlant);
-router.post('/diagnose', auth, upload.single('image'), aiController.diagnosePlant);
+router.post('/identify', auth, upload.single('image'), handleUploadError, aiController.identifyPlant);
+router.post('/diagnose', auth, upload.single('image'), handleUploadError, aiController.diagnosePlant);
 router.post('/care-advice', auth, aiController.getCareAdvice);
 router.post('/care-schedule', auth, aiController.generateCareSchedule);
 router.post('/growth-prediction', auth, aiController.predictGrowth);
