@@ -20,7 +20,8 @@ const corsOptions = {
   },
   credentials: true,
   methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  // When allowedHeaders is undefined, the cors middleware will reflect
+  // Access-Control-Request-Headers from the client, which avoids preflight blocks
   optionsSuccessStatus: 204
 };
 
